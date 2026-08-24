@@ -1,0 +1,15 @@
+# Entornos virtuales de Python
+venv/
+env/
+.venv/
+
+# Archivos compilados / cache de Python
+__pycache__/
+*.pyc
+
+# Configuracion local con datos sensibles (si se llegara a crear)
+.env
+
+# Archivos del sistema operativo / editor
+.DS_Store
+.vscode/
