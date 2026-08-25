@@ -1,37 +1,11 @@
-"""
-scraper.py
-----------
-Modulo encargado de traer informacion desde internet: primero la lista
-de noticias (desde el feed de El Vigia), y despues el texto completo
-de cada noticia (entrando a la pagina de cada articulo).
-
-Decision de diseno:
-    Se separo en DOS pasos (lista de noticias, y luego texto completo)
-    en vez de uno solo, porque el feed de noticias NO trae el texto
-    completo del articulo (solo el titulo y a veces un fragmento). El
-    texto completo, que es donde estan los cierres de calles con dias
-    y numeros, solo esta disponible entrando a la pagina de cada
-    noticia por separado.
-"""
-
 import warnings
 
 import requests
 from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 
-# El feed de El Vigia esta en formato Atom (un tipo de XML). Al usar
-# "html.parser" (que no distingue XML de HTML) para leerlo,
-# BeautifulSoup muestra una advertencia recomendando el parser "xml".
-# Ese parser depende de la libreria externa lxml, que el proyecto no
-# puede usar, asi que se silencia esta advertencia concreta a
-# proposito.
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
-# Encabezado que se manda en cada peticion HTTP para identificar el
-# programa ante el servidor, y para reducir la posibilidad de que el
-# sitio rechace la peticion por parecer trafico automatizado sin
-# identificar.
-ENCABEZADOS = {"User-Agent": "pythongetnews/2.0 (proyecto educativo UABC)"}
+ENCABEZADOS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Accept-Language": "es-MX,es;q=0.9"}
 
 
 class ScraperError(Exception):
@@ -75,14 +49,9 @@ def obtener_lista_noticias(url_feed: str, limite: int = None) -> list:
         etiqueta_enlace = entrada.find("link")
 
         if not etiqueta_titulo or not etiqueta_enlace:
-            # Si a una entrada le falta el titulo o el enlace, no
-            # sirve de nada y se descarta.
             continue
 
         titulo = etiqueta_titulo.get_text(strip=True)
-        # El enlace esta guardado como ATRIBUTO href, no como texto:
-        # <link href="https://..." />, por eso se usa .get("href") en
-        # vez de .get_text().
         enlace = etiqueta_enlace.get("href", "").strip()
 
         if not enlace:
@@ -123,7 +92,4 @@ def obtener_texto_articulo(url: str) -> str:
         if len(texto_parrafo) >= 40:
             parrafos_utiles.append(texto_parrafo)
 
-    # Se unen todos los parrafos utiles en un solo texto grande,
-    # separados por un salto de linea, para que extractor.py pueda
-    # analizar la noticia completa de una sola vez.
     return "\n".join(parrafos_utiles)
