@@ -8,6 +8,7 @@ import database
 
 class ManejadorPeticiones(BaseHTTPRequestHandler):
 
+
     def _responder_json(self, datos, codigo_estado: int = 200) -> None:
         cuerpo = json.dumps(datos, default=str, ensure_ascii=False).encode("utf-8")
 
@@ -36,7 +37,6 @@ class ManejadorPeticiones(BaseHTTPRequestHandler):
                 codigo_estado=500,
             )
             return
-
         texto_busqueda = parametros.get("nombre", [""])[0]
 
         try:
@@ -55,12 +55,10 @@ class ManejadorPeticiones(BaseHTTPRequestHandler):
         self._responder_json({"total": len(resultados), "resultados": resultados})
 
     def log_message(self, formato, *args):
-        
         print(f"[API] {self.address_string()} -> {formato % args}")
 
 
 def iniciar_servidor(host: str, puerto: int) -> None:
-    
     servidor = HTTPServer((host, puerto), ManejadorPeticiones)
     print(f"API escuchando en http://{host}:{puerto}/vias")
     print("Ejemplo de uso: "
