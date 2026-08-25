@@ -2,22 +2,17 @@
 
 Programa en Python que analiza noticias reales del periódico **El
 Vigía** (Ensenada, B.C.) para detectar avisos de **cierres de calles**,
-extrayendo:
 
 1. Los **días de la semana** mencionados junto con su **número de día
-   del mes**, validando que ese número esté entre 1 y 31.
+   del mes**
 2. Las **calles, avenidas, bulevares y colonias** mencionadas.
 
 Toda la información se guarda en una base de datos **MySQL**, y el
-proyecto incluye una **API propia** (sin frameworks externos) para
-consultar el catálogo de vías urbanas.
+proyecto incluye una **API propia** (sin frameworks externos)
 
----
+# Qué hice
 
-## Qué hice y cómo lo hice
-
-El proyecto está dividido en 6 módulos, cada uno con una sola
-responsabilidad:
+El proyecto está dividido en 6 módulos
 
 | Archivo | Qué hace |
 |---|---|
@@ -29,47 +24,28 @@ responsabilidad:
 | `api.py` | API HTTP propia (con `http.server`, sin Flask) para consultar las vías guardadas. |
 | `config.py` | Configuración centralizada (URLs y datos de conexión a MySQL). |
 
-### Paso a paso de lo que hace el programa
+# El paso a paso
 
 1. **Investigación de la fuente de noticias:** se buscó un periódico
    real de Ensenada que publique avisos de cierres viales. Se
-   encontró que **El Vigía** (el periódico de mayor circulación en la
-   ciudad) publica un feed de noticias en formato **Atom** (un tipo de
-   XML pensado para que los programas lean noticias automáticamente),
-   disponible en `https://www.elvigia.net/rss/feed.html?r=77` para la
-   sección General, que es donde se publican este tipo de avisos.
+   encontró que **El Vigía** publica un feed de noticias en formato **Atom** (un tipo de XML pensado para que los programas lean noticias automáticamente), disponible en `https://www.elvigia.net/rss/feed.html?r=77` para la sección General, que es donde se publican este tipo de avisos.
 
 2. **Investigación del catastro de Ensenada:** se buscó la base de
    datos oficial de calles y colonias de Ensenada. Se encontró que el
    organismo responsable es el **IMIP** (Instituto Municipal de
    Investigación y Planeación), que publica capas geoespaciales
    (calles, colonias, manzanas) para descarga pública en
-   `https://sigimip.org.mx/descargas.html`. Como esas capas vienen en
-   formatos de Sistemas de Información Geográfica que normalmente se
-   procesan con librerías especializadas (fuera de lo permitido por
-   este proyecto), se optó por dos cosas: (a) `catastro.py` sí entra a
-   esa página con `requests` y `BeautifulSoup` para listar qué capas
-   ofrecen, dejando documentada la fuente oficial con código real; y
-   (b) se armó un **catálogo semilla** de calles, avenidas y colonias
-   reales de Ensenada (tomadas de noticias reales de cierres viales),
-   que sirve como catálogo de referencia utilizable dentro de las
-   herramientas permitidas.
+   `https://sigimip.org.mx/descargas.html`se optó por dos cosas: (a) `catastro.py` sí entra a esa página con `requests` y `BeautifulSoup` para listar qué capas ofrecen, dejando documentada la fuente oficial con código real; y (b) se armó un **catálogo semilla** de calles, avenidas y colonias de Ensenada que sirve como catálogo de referencia utilizable dentro de la herramientas permitidas.
 
 3. **Descarga de noticias:** `scraper.py` descarga el feed y, por cada
-   noticia, entra a su página para leer el texto completo (el feed
-   solo trae el título, no el cuerpo de la noticia).
+   noticia, entra a su página para leer el texto completo
 
 4. **Extracción de días y dígitos:** `extractor.py` recorre el texto
-   palabra por palabra (igual que el ejercicio original), buscando
-   los 7 días de la semana. Cuando encuentra uno, revisa si la palabra
-   siguiente es un número válido de día de mes (entre 1 y 31) y lo
-   guarda; si no es válido (por ejemplo "35"), lo descarta.
+   palabra por palabra buscando los 7 días de la semana. Cuando encuentra uno, revisa si la palabra siguiente es un número válido de día de mes (entre 1 y 31) y lo guarda; si no es válido (por ejemplo "35"), lo descarta.
 
 5. **Extracción de vías urbanas:** también en `extractor.py`, se usa
    una expresión regular para encontrar palabras clave como "calle",
-   "avenida", "bulevar" o "colonia" seguidas de un nombre propio
-   (palabras que empiezan con mayúscula), permitiendo capturar
-   nombres de más de una palabra como "Lázaro Cárdenas".
+   "avenida", "bulevar" o "colonia" seguidas de un nombre propio permitiendo capturar nombres de más de una palabra como "Lázaro Cárdenas".
 
 6. **Guardado en MySQL:** `database.py` crea dos tablas
    (`dias_digitos` y `vias_urbanas`) y guarda ahí los resultados,
@@ -83,7 +59,7 @@ responsabilidad:
 
 ---
 
-## Por qué tomé estas decisiones
+# Por qué decidi esto
 
 - **RSS/Atom en vez de raspar el HTML de la portada:** un feed de
   noticias tiene una estructura fija (título, enlace, fecha) que casi
@@ -94,9 +70,7 @@ responsabilidad:
 - **Extraer el texto del artículo usando "todos los párrafos largos"
   en vez de una clase CSS exacta:** esto hace el scraper más
   resistente a cambios de diseño del sitio, a costa de ser un poco
-  menos preciso (podría incluir algún párrafo que no sea parte del
-  cuerpo de la noticia). Es un compromiso razonable para un proyecto
-  educativo que no tiene control sobre el sitio que está leyendo.
+  menos preciso.
 
 - **`_es_dia_de_mes_valido()` como función separada:** es el corazón
   del requisito de "evaluar que el dígito esté en el rango de 1 a
@@ -124,49 +98,35 @@ responsabilidad:
   diseño de bases de datos.
 
 - **Columna `verificada` en `vias_urbanas`:** permite distinguir entre
-  las vías que vienen del catálogo oficial semilla (más confiables) y
-  las que el programa detectó automáticamente en el texto de una
-  noticia (que podrían tener algún error de extracción).
+  las vías que vienen del catálogo oficial semilla y las que el programa detectó automáticamente en el texto de una noticia.
 
-- **API construida con `http.server` en vez de Flask:** el proyecto
-  exige no usar librerías externas fuera de `requests`,
-  `beautifulsoup4` y `mysql-connector-python`. `http.server` viene
-  incluido en Python y es suficiente para exponer un par de rutas
-  GET sencillas.
-
----
-
-## Versión de Python usada
+# Versión de Python usada
 
 **Python 3.13.5**
 
-## Cómo ejecutarlo
+# Cómo ejecutarlo
 
-### 1. Clonar el repositorio
+# 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/TU-USUARIO/pythongetnews.git
 cd pythongetnews
 ```
 
-### 2. Crear un entorno virtual (recomendado)
+# 2. Crear un entorno virtual (recomendado)
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate          # En Windows: venv\Scripts\activate
 ```
 
-### 3. Instalar las dependencias
+# 3. Instalar las dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Tener MySQL corriendo
-
-No hace falta crear la base de datos ni las tablas a mano: el
-programa las crea automáticamente. Solo necesitas que el usuario de
-MySQL exista y tenga permisos:
+# 4. Tener MySQL corriendo
 
 ```sql
 CREATE USER IF NOT EXISTS 'tu_usuario'@'localhost' IDENTIFIED BY 'tu_contrasena';
@@ -174,11 +134,9 @@ GRANT ALL PRIVILEGES ON *.* TO 'tu_usuario'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-### 5. Configurar la conexión a la base de datos
+# 5. Configurar la conexión a la base de datos
 
-El programa lee la configuración desde variables de entorno. Si no
-defines ninguna, usa valores por defecto pensados para pruebas
-locales (usuario `root`, sin contraseña).
+El programa lee la configuración desde variables de entorno.
 
 ```bash
 export DB_HOST=localhost
@@ -187,9 +145,7 @@ export DB_PASSWORD=tu_contrasena
 export DB_NAME=pythongetnews
 ```
 
-### 6. Ejecutar el programa
-
-Solo el proceso de scraping y guardado:
+# 6. Ejecutar el programa
 
 ```bash
 python3 main.py
@@ -211,7 +167,7 @@ curl "http://127.0.0.1:8000/vias?nombre=Reforma"
 
 ---
 
-## Estructura del proyecto
+# Estructura del proyecto
 
 ```
 pythongetnews/
